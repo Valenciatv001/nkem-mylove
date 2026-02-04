@@ -18,7 +18,7 @@ const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(ma
 
 export default function Home() {
 
-  const HER_NAME = "Hi Nkem💖"; 
+  const HER_NAME = "Nkem💖"; 
 
   const cardRef = useRef<HTMLDivElement | null>(null);
   const noFloatRef = useRef<HTMLDivElement | null>(null);
@@ -184,7 +184,7 @@ useEffect(() => {
             </div>
 
             <h1>
-              Hey <span className="name">{HER_NAME}</span>…
+              Hi <span className="name">{HER_NAME}</span>…
               <br />
               will you be my <span className="val">Val</span>?
             </h1>
@@ -198,8 +198,11 @@ useEffect(() => {
               <div className="panel">
                 <h3>Why you?</h3>
                 <p>
-                  Because you feel like peace and trouble at the same time — the good kind. I’m
-                  asking properly 😌
+                  {/* Because you feel like peace and trouble at the same time — the good kind. I’m
+                  asking properly 😌 */}
+
+                  Because you feel like peace and trouble at the same time — the good kind.
+                  You calm me, challenge me, and somehow feel like home. I’m asking properly 😌
                 </p>
               </div>
 
