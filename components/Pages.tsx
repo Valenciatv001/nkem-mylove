@@ -1,6 +1,3 @@
-
-
-
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -16,9 +13,8 @@ type Heart = {
 
 const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n));
 
-export default function Home() {
-
-  const HER_NAME = "My Nkem💖 Love"; 
+export default function Page() {
+  const HER_NAME = "My Love";
 
   const cardRef = useRef<HTMLDivElement | null>(null);
   const noFloatRef = useRef<HTMLDivElement | null>(null);
@@ -29,13 +25,12 @@ export default function Home() {
 
   const [noTransform, setNoTransform] = useState<string>("translate(-50%, -50%)");
   const [hearts, setHearts] = useState<Heart[]>([]);
-    const [isTouch, setIsTouch] = useState(false);
-  
+  const [isTouch, setIsTouch] = useState(false);
 
   const emojis = useMemo(() => ["💖", "💘", "💗", "✨", "💞", "😍"], []);
 
   const addHeart = (x?: number) => {
-    const w = typeof window !== "undefined" ? window.innerWidth : 1000;
+    const w = window.innerWidth;
     const left = typeof x === "number" ? x : Math.random() * w;
 
     const id = crypto?.randomUUID?.() ?? String(Date.now() + Math.random());
@@ -49,7 +44,7 @@ export default function Home() {
 
     window.setTimeout(() => {
       setHearts((prev) => prev.filter((p) => p.id !== id));
-    }, durationMs + 800);
+    }, durationMs + 900);
   };
 
   const burstHearts = (count = 20) => {
@@ -60,7 +55,7 @@ export default function Home() {
   };
 
   const moveNoAway = (pointerX: number, pointerY: number) => {
-    const pad = 60;
+    const pad = 56;
     const w = window.innerWidth;
     const h = window.innerHeight;
 
@@ -81,9 +76,10 @@ export default function Home() {
     x = clamp(x, pad, w - pad);
     y = clamp(y, pad, h - pad);
 
-    // base anchor is left:55%, top:68% with translate(-50%,-50%)
-    const baseX = w * 0.55;
-    const baseY = h * 0.68;
+    // base anchor differs on mobile so NO doesn't end up under the card
+    const baseX = w * 0.6;
+    const baseY = h * (w < 720 ? 0.86 : 0.68);
+
     const dx = x - baseX;
     const dy = y - baseY;
 
@@ -91,16 +87,16 @@ export default function Home() {
   };
 
   // Detect touch devices (mobile/tablet)
-useEffect(() => {
+  useEffect(() => {
     const touch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
     setIsTouch(touch);
-}, []);
+  }, []);
 
-  // ===== mouse listeners for tilt + NO dodge =====
+  // Tilt + NO dodge
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
       const card = cardRef.current;
-      if (card) {
+      if (card && !isTouch) {
         const rect = card.getBoundingClientRect();
         const cx = rect.left + rect.width / 2;
         const cy = rect.top + rect.height / 2;
@@ -108,8 +104,9 @@ useEffect(() => {
         const dx = (e.clientX - cx) / rect.width;
         const dy = (e.clientY - cy) / rect.height;
 
-        setRy(clamp(dx * 10, -10, 10));
-        setRx(clamp(-dy * 10, -10, 10));
+        // lighter tilt for comfort
+        setRy(clamp(dx * 8, -8, 8));
+        setRx(clamp(-dy * 8, -8, 8));
       }
 
       const nf = noFloatRef.current;
@@ -135,13 +132,26 @@ useEffect(() => {
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mouseleave", onLeave);
     };
-  }, []);
+  }, [isTouch]);
 
-  // subtle ambient hearts
+  // On mobile: tap anywhere makes NO relocate a bit (fun UX)
   useEffect(() => {
-    const t = window.setInterval(() => addHeart(Math.random() * window.innerWidth), 1200);
+    const onTap = (e: TouchEvent) => {
+      if (!isTouch) return;
+      const t = e.touches?.[0];
+      if (!t) return;
+      moveNoAway(t.clientX, t.clientY);
+    };
+    window.addEventListener("touchstart", onTap, { passive: true });
+    return () => window.removeEventListener("touchstart", onTap);
+  }, [isTouch]);
+
+  // Ambient hearts (slower on mobile to save perf)
+  useEffect(() => {
+    const interval = isTouch ? 1700 : 1200;
+    const t = window.setInterval(() => addHeart(Math.random() * window.innerWidth), interval);
     return () => window.clearInterval(t);
-  }, []);
+  }, [isTouch]);
 
   return (
     <>
@@ -152,7 +162,6 @@ useEffect(() => {
           ref={cardRef}
           className="card tilt"
           style={{
-            // CSS vars for tilt
             ["--rx" as any]: `${rx}deg`,
             ["--ry" as any]: `${ry}deg`,
           }}
@@ -206,10 +215,8 @@ useEffect(() => {
               <div className="panel">
                 <h3>What you get</h3>
                 <p>
-                  Maximum care ✅
-                  <br />
-                  Premium attention ✅
-                  <br />
+                  Maximum care ✅<br />
+                  Premium attention ✅<br />
                   Soft life energy ✅
                 </p>
               </div>
@@ -272,7 +279,6 @@ useEffect(() => {
         :global(:root) {
           --bg1: #0b1020;
           --bg2: #140b1f;
-          --glass: rgba(255, 255, 255, 0.08);
           --stroke: rgba(255, 255, 255, 0.12);
           --text: rgba(255, 255, 255, 0.92);
           --muted: rgba(255, 255, 255, 0.65);
@@ -365,9 +371,9 @@ useEffect(() => {
 
         .content {
           position: relative;
-          padding: 42px 40px 34px;
+          padding: 28px 18px 22px;
           display: grid;
-          gap: 18px;
+          gap: 14px;
           transform: translateZ(20px);
         }
 
@@ -375,7 +381,7 @@ useEffect(() => {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          gap: 12px;
+          gap: 10px;
           opacity: 0.95;
         }
 
@@ -388,11 +394,6 @@ useEffect(() => {
           border: 1px solid rgba(255, 255, 255, 0.14);
           background: rgba(0, 0, 0, 0.18);
           box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
-          transform: translateZ(22px);
-        }
-
-        .badgeText {
-          font-weight: 700;
         }
 
         .dot {
@@ -404,24 +405,25 @@ useEffect(() => {
         }
 
         .hint {
-          font-size: 13px;
+          font-size: 12px;
           color: var(--muted);
           user-select: none;
+          white-space: nowrap;
         }
 
         h1 {
           margin: 0;
-          font-size: clamp(34px, 4vw, 56px);
+          font-size: clamp(28px, 6vw, 56px);
           letter-spacing: -0.03em;
-          line-height: 1.05;
+          line-height: 1.08;
           text-shadow: 0 18px 30px rgba(0, 0, 0, 0.35);
         }
 
         .sub {
           margin: 0;
-          max-width: 60ch;
+          max-width: 65ch;
           color: rgba(255, 255, 255, 0.76);
-          font-size: clamp(14px, 1.8vw, 18px);
+          font-size: clamp(14px, 3.7vw, 18px);
           line-height: 1.55;
         }
 
@@ -441,20 +443,18 @@ useEffect(() => {
 
         .grid {
           display: grid;
-          grid-template-columns: 1.2fr 0.8fr;
-          gap: 18px;
-          margin-top: 14px;
-          align-items: stretch;
+          grid-template-columns: 1fr;
+          gap: 14px;
+          margin-top: 10px;
         }
 
         .panel {
           border-radius: 18px;
           border: 1px solid rgba(255, 255, 255, 0.12);
           background: rgba(0, 0, 0, 0.18);
-          padding: 18px;
+          padding: 16px;
           position: relative;
           overflow: hidden;
-          transform: translateZ(18px);
         }
 
         .panel::after {
@@ -468,7 +468,7 @@ useEffect(() => {
 
         .panel h3 {
           margin: 0 0 6px;
-          font-size: 14px;
+          font-size: 13px;
           letter-spacing: 0.08em;
           text-transform: uppercase;
           color: rgba(255, 255, 255, 0.72);
@@ -478,17 +478,16 @@ useEffect(() => {
           margin: 0;
           color: rgba(255, 255, 255, 0.82);
           line-height: 1.55;
-          font-size: 15px;
+          font-size: 14px;
         }
 
         .ctaRow {
           display: flex;
-          gap: 14px;
+          gap: 12px;
           flex-wrap: wrap;
           align-items: center;
-          margin-top: 18px;
+          margin-top: 14px;
           padding-top: 10px;
-          position: relative;
         }
 
         .btn {
@@ -499,15 +498,14 @@ useEffect(() => {
           font-weight: 700;
           letter-spacing: 0.01em;
           color: white;
-          position: relative;
-          transform: translateZ(22px);
           box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
           transition: transform 0.18s ease, filter 0.18s ease, box-shadow 0.18s ease;
           user-select: none;
+          touch-action: manipulation;
         }
 
         .btn:active {
-          transform: translateZ(22px) scale(0.98);
+          transform: scale(0.98);
         }
 
         .yes {
@@ -516,7 +514,6 @@ useEffect(() => {
 
         .yes:hover {
           filter: brightness(1.08);
-          box-shadow: 0 26px 55px rgba(255, 77, 141, 0.18), 0 26px 55px rgba(124, 77, 255, 0.14);
         }
 
         .no {
@@ -524,19 +521,20 @@ useEffect(() => {
           border: 1px solid rgba(255, 255, 255, 0.18);
           color: rgba(255, 255, 255, 0.78);
           cursor: default;
-          pointer-events: none; /* cannot click */
+          pointer-events: none;
         }
 
         .footer {
-          margin-top: 10px;
+          margin-top: 6px;
           font-size: 12px;
           color: rgba(255, 255, 255, 0.55);
         }
 
+        /* NO positioning: mobile-friendly */
         .noFloat {
           position: fixed;
-          left: 55%;
-          top: 68%;
+          left: 60%;
+          top: 86%;
           z-index: 30;
           pointer-events: none;
           transition: transform 0.22s ease;
@@ -568,7 +566,7 @@ useEffect(() => {
             opacity: 1;
           }
           100% {
-            transform: translate3d(var(--dx), -560px, 0) scale(1.25);
+            transform: translate3d(var(--dx), -520px, 0) scale(1.25);
             opacity: 0;
           }
         }
@@ -578,7 +576,7 @@ useEffect(() => {
           inset: 0;
           display: none;
           place-items: center;
-          padding: 22px;
+          padding: 18px;
           background: rgba(0, 0, 0, 0.55);
           backdrop-filter: blur(10px);
           z-index: 60;
@@ -594,12 +592,12 @@ useEffect(() => {
           border: 1px solid rgba(255, 255, 255, 0.14);
           background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.07));
           box-shadow: 0 40px 90px rgba(0, 0, 0, 0.55);
-          padding: 22px;
+          padding: 18px;
         }
 
         .sheet h2 {
           margin: 0 0 10px;
-          font-size: 26px;
+          font-size: 22px;
           letter-spacing: -0.02em;
         }
 
@@ -607,6 +605,7 @@ useEffect(() => {
           margin: 0 0 16px;
           color: rgba(255, 255, 255, 0.78);
           line-height: 1.6;
+          font-size: 14px;
         }
 
         .miniRow {
@@ -620,12 +619,25 @@ useEffect(() => {
           border: 1px solid rgba(255, 255, 255, 0.16);
         }
 
-        @media (max-width: 720px) {
+        /* upscale layout on bigger screens */
+        @media (min-width: 720px) {
           .content {
-            padding: 34px 22px 26px;
+            padding: 42px 40px 34px;
+            gap: 18px;
           }
           .grid {
-            grid-template-columns: 1fr;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 18px;
+          }
+          .panel {
+            padding: 18px;
+          }
+          .panel p {
+            font-size: 15px;
+          }
+          .noFloat {
+            left: 55%;
+            top: 68%;
           }
         }
       `}</style>
