@@ -18,7 +18,7 @@ const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(ma
 
 export default function Home() {
 
-  const HER_NAME = "My Nkem💖 Love"; 
+  const HER_NAME = "Hi Nkem💖"; 
 
   const cardRef = useRef<HTMLDivElement | null>(null);
   const noFloatRef = useRef<HTMLDivElement | null>(null);
